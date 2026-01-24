@@ -1,99 +1,156 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Compras Nube</title>
+    <title>Gestor Pro v3</title>
     <style>
-        /* ESTILOS VISUALES (Igual que la versión anterior) */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h1 { text-align: center; color: #1a202c; font-size: 1.5rem; margin-bottom: 20px; }
+        /* ESTILOS VISUALES MEJORADOS */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h1 { text-align: center; color: #1a202c; margin-bottom: 25px; }
         
         /* Pestañas */
         .tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
-        .tab-btn { flex: 1; background: none; border: none; padding: 12px; font-weight: 600; color: #718096; cursor: pointer; transition: 0.2s; }
-        .tab-btn.active { color: #3182ce; border-bottom: 3px solid #3182ce; }
-        .tab-btn:hover { background-color: #f7fafc; }
+        .tab-btn { flex: 1; background: none; border: none; padding: 15px; font-weight: 600; color: #718096; cursor: pointer; }
+        .tab-btn.active { color: #3182ce; border-bottom: 3px solid #3182ce; background-color: #ebf8ff; }
         
         /* Secciones */
         .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Formularios y Inputs */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background-color: #fff; }
+        input:focus, select:focus { outline: none; border-color: #3182ce; box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2); }
 
-        /* Formularios */
-        label { display: block; margin-top: 15px; font-weight: 500; font-size: 0.9rem; color: #4a5568; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        input:focus { outline: none; border-color: #3182ce; ring: 2px solid #bee3f8; }
+        /* Separadores Visuales */
+        .separator { border-top: 2px dashed #cbd5e0; margin: 30px 0; position: relative; }
+        .separator span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #f0f2f5; padding: 0 10px; color: #718096; font-size: 0.8rem; font-weight: bold; border-radius: 10px; }
+        
+        .sub-box { background-color: #f7fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .sub-title { font-size: 1.1rem; font-weight: bold; color: #2d3748; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
 
         /* Botones */
-        .btn { width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; }
-        .btn-primary { background-color: #3182ce; color: white; }
-        .btn-primary:hover { background-color: #2b6cb0; }
-        .btn-success { background-color: #38a169; color: white; }
-        .btn-danger { background-color: #e53e3e; color: white; padding: 6px 12px; font-size: 0.8rem; margin: 0; width: auto; }
-        .btn-add { background-color: #3182ce; color: white; border: none; border-radius: 6px; width: 50px; cursor: pointer; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; color: white; }
+        .btn-primary { background-color: #3182ce; } .btn-primary:hover { background-color: #2c5282; }
+        .btn-secondary { background-color: #718096; } .btn-secondary:hover { background-color: #4a5568; }
+        .btn-success { background-color: #38a169; } .btn-success:hover { background-color: #2f855a; }
+        .btn-danger { background-color: #e53e3e; width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        .btn-add { background-color: #3182ce; width: 60px; }
 
-        /* Listas y Tablas */
-        .list-item { display: flex; justify-content: space-between; align-items: center; background: #f7fafc; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
-        .result-card { background: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px; margin-top: 10px; border-radius: 4px; }
+        /* Resultados */
+        .result-card { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px; margin-top: 10px; border-radius: 6px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 6px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f7fafc; color: #4a5568; font-weight: 600; }
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f7fafc; color: #4a5568; }
+
+        #status { text-align: center; font-size: 0.8rem; margin-top: 10px; }
+        .online { color: #38a169; font-weight: bold; }
         
-        /* Indicador de carga */
-        #status { text-align: center; font-size: 0.8rem; color: #718096; margin-top: 10px; }
-        .loading { color: #d69e2e; }
-        .online { color: #38a169; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🛒 Gestor de Compras <span style="font-size:0.8rem; color:#718096">(Nube)</span></h1>
+    <h1>🏭 Gestor de Distribuidora</h1>
     
     <div class="tabs">
-        <button class="tab-btn active" onclick="cambiarPestana('registro')">Registrar</button>
-        <button class="tab-btn" onclick="cambiarPestana('compra')">Comprar</button>
-        <button class="tab-btn" onclick="cambiarPestana('catalogo')">Catálogo</button>
+        <button class="tab-btn active" onclick="cambiarPestana('registro')">1. REGISTRAR</button>
+        <button class="tab-btn" onclick="cambiarPestana('compra')">2. COMPRAR</button>
+        <button class="tab-btn" onclick="cambiarPestana('catalogo')">3. CATÁLOGO</button>
     </div>
 
     <div id="registro" class="section active">
-        <label>Producto:</label>
-        <input type="text" id="regProducto" list="listaProductos" placeholder="Ej. Cuaderno Prof.">
-        <datalist id="listaProductos"></datalist>
+        
+        <div class="sub-box">
+            <div class="sub-title">✨ Paso 1: Alta de Producto Nuevo</div>
+            <p style="font-size:0.85rem; color:#718096; margin-bottom:10px;">Registra aquí el nombre solo una vez. Así evitas duplicados por errores de dedo.</p>
+            
+            <div class="form-group">
+                <label>Categoría:</label>
+                <input type="text" id="nuevaCategoria" list="listaCategoriasSugeridas" placeholder="Ej. Papel, Escritura, Oficina...">
+                <datalist id="listaCategoriasSugeridas"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Nombre del Producto:</label>
+                <input type="text" id="nuevoNombreProducto" placeholder="Ej. Cuaderno Profesional 100h">
+            </div>
+            <button class="btn btn-secondary" onclick="crearProductoMaestro()">Crear Producto en Sistema</button>
+        </div>
 
-        <label>Tienda / Proveedor:</label>
-        <input type="text" id="regTienda" list="listaTiendas" placeholder="Ej. Lumen">
-        <datalist id="listaTiendas"></datalist>
+        <div class="separator"><span>⬇ SI YA EXISTE EL PRODUCTO, LLENA PRECIO ABAJO ⬇</span></div>
 
-        <label>Precio Unitario ($):</label>
-        <input type="number" id="regPrecio" step="0.1" placeholder="0.00">
+        <div class="sub-box" style="border-color: #3182ce; background-color: #fff;">
+            <div class="sub-title" style="color:#3182ce">💲 Paso 2: Registrar Precio</div>
+            
+            <div class="form-group">
+                <label>Filtrar por Categoría:</label>
+                <select id="filtroCatRegistro" onchange="filtrarProductos('registro')">
+                    <option value="">-- Selecciona Categoría --</option>
+                </select>
+            </div>
 
-        <button class="btn btn-primary" onclick="guardarPrecioEnNube()">💾 Guardar en Nube</button>
-        <p id="status" class="loading">Conectando...</p>
+            <div class="form-group">
+                <label>Seleccionar Producto:</label>
+                <select id="selProductoRegistro">
+                    <option value="">-- Primero elige categoría --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Tienda / Proveedor:</label>
+                <input type="text" id="regTienda" list="listaTiendas" placeholder="Ej. Tony, Lumen, Proveedor X">
+                <datalist id="listaTiendas"></datalist>
+            </div>
+
+            <div class="form-group">
+                <label>Precio ($):</label>
+                <input type="number" id="regPrecio" step="0.1" placeholder="0.00">
+            </div>
+
+            <button class="btn btn-primary" onclick="guardarPrecio()">💾 Guardar Precio y Proveedor</button>
+        </div>
+        <p id="status">Conectando...</p>
     </div>
 
     <div id="compra" class="section">
-        <label>Armar Lista:</label>
-        <div style="display: flex; gap: 10px;">
-            <select id="selCarrito"></select>
-            <button class="btn-add" onclick="agregarAlCarrito()">➕</button>
+        <div class="sub-box">
+            <div class="sub-title">🛒 Armar Pedido</div>
+            
+            <div class="form-group">
+                <label>Categoría:</label>
+                <select id="filtroCatCompra" onchange="filtrarProductos('compra')">
+                    <option value="">-- Selecciona Categoría --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Producto:</label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="selProductoCompra">
+                        <option value="">-- Selecciona Producto --</option>
+                    </select>
+                    <button class="btn btn-add" onclick="agregarAlCarrito()">➕</button>
+                </div>
+            </div>
         </div>
 
-        <div id="listaVisual" style="margin-top: 20px;"></div>
-
-        <button class="btn btn-success" onclick="calcularOptimo()">🚀 CALCULAR MEJOR OPCIÓN</button>
+        <div id="listaVisual"></div>
+        <button class="btn btn-success" style="margin-top:20px;" onclick="calcularOptimo()">🚀 CALCULAR MEJOR OPCIÓN</button>
         <div id="resultadoFinal"></div>
     </div>
 
     <div id="catalogo" class="section">
-        <button class="btn btn-primary" onclick="exportarCSV()" style="margin-bottom: 15px;">📥 Descargar Excel (.csv)</button>
+        <button class="btn btn-primary" onclick="exportarCSV()" style="margin-bottom: 15px;">📥 Descargar Base de Datos (.csv)</button>
         <div style="overflow-x:auto;">
             <table id="tablaDatos">
-                <thead><tr><th>Producto</th><th>Tienda</th><th>$ Precio</th><th>Fecha</th></tr></thead>
+                <thead><tr><th>Categoría</th><th>Producto</th><th>Tienda</th><th>Precio</th><th>Fecha</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -101,235 +158,274 @@
 </div>
 
 <script type="module">
-    // 1. IMPORTAR FIREBASE DESDE LA RED (CDN)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ------------------------------------------------------------------
-    // 2. PEGA AQUÍ TU CONFIGURACIÓN (PASO CRÍTICO)
-    // ------------------------------------------------------------------
+    // --------------------------------------------------------
+    // ¡¡¡ PEGA AQUÍ TUS CREDENCIALES DE FIREBASE !!!
+    // --------------------------------------------------------
     const firebaseConfig = {
-        // !!! BORRA ESTAS LÍNEAS Y PON TUS CLAVES DE FIREBASE AQUÍ !!!
-        apiKey: "AIzaSyDVUcidSc7_csmF7RtSLRv15Oam7Ika8Qs",
-    authDomain: "gestor-de-precios-abarrotesddj.firebaseapp.com",
-    projectId: "gestor-de-precios-abarrotesddj",
-    storageBucket: "gestor-de-precios-abarrotesddj.firebasestorage.app",
-    messagingSenderId: "1012662122228",
-    appId: "1:1012662122228:web:c745c2ebe88bd2fa8ed0a1"
+      apiKey: "AIzaSyDVUcidSc7_csmF7RtSLRv15Oam7Ika8Qs",
+  authDomain: "gestor-de-precios-abarrotesddj.firebaseapp.com",
+  projectId: "gestor-de-precios-abarrotesddj",
+  storageBucket: "gestor-de-precios-abarrotesddj.firebasestorage.app",
+  messagingSenderId: "1012662122228",
+  appId: "1:1012662122228:web:c745c2ebe88bd2fa8ed0a1"
     };
-    // ------------------------------------------------------------------
+    // --------------------------------------------------------
 
-    // 3. INICIALIZAR LA APP
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    // Variables de memoria local
-    let baseDatos = {}; 
-    let carrito = [];
     const statusEl = document.getElementById('status');
 
-    // 4. ESCUCHAR CAMBIOS EN TIEMPO REAL
-    // Esto se ejecuta automáticamente cuando hay datos nuevos en la nube
-    const q = query(collection(db, "precios"), orderBy("fecha", "desc"));
-    
-    onSnapshot(q, (snapshot) => {
-        baseDatos = {}; // Reiniciamos memoria
-        
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            // Reconstruimos la estructura para que el resto del código funcione
-            if (!baseDatos[data.producto]) baseDatos[data.producto] = {};
-            
-            // Si ya existe la tienda, nos quedamos con el registro más reciente (opcional)
-            // Aquí simplemente sobrescribimos porque ordenamos por fecha
-            baseDatos[data.producto][data.tienda] = {
-                precio: Number(data.precio),
-                fecha: data.fecha
-            };
-        });
+    // VARIABLES DE MEMORIA
+    let listaProductosMaestros = []; // [{id, nombre, categoria}]
+    let listaPrecios = [];           // [{producto, categoria, tienda, precio, fecha}]
+    let carrito = [];
 
-        // Actualizamos la interfaz
-        actualizarDesplegables();
-        renderizarTabla();
-        
-        statusEl.textContent = "🟢 Conectado y Sincronizado";
-        statusEl.className = "online";
-        console.log("Datos recibidos de Firebase");
-    }, (error) => {
-        statusEl.textContent = "🔴 Error de conexión: " + error.message;
-        console.error(error);
+    // 1. ESCUCHAR "PRODUCTOS MAESTROS" (Lista de nombres únicos)
+    const qProd = query(collection(db, "productos_maestro"), orderBy("nombre"));
+    onSnapshot(qProd, (snapshot) => {
+        listaProductosMaestros = [];
+        snapshot.forEach(doc => {
+            listaProductosMaestros.push(doc.data());
+        });
+        actualizarSelectoresCategorias(); // Actualizar dropdowns
+        console.log("Productos actualizados:", listaProductosMaestros.length);
     });
 
-    // 5. FUNCIONES GLOBALES (Para que el HTML las encuentre)
-    
-    // --- Guardar ---
-    window.guardarPrecioEnNube = async function() {
-        const prod = document.getElementById('regProducto').value.trim().toLowerCase();
-        const tienda = document.getElementById('regTienda').value.trim();
+    // 2. ESCUCHAR "PRECIOS" (Historial de costos)
+    const qPrecios = query(collection(db, "precios"), orderBy("fecha", "desc"));
+    onSnapshot(qPrecios, (snapshot) => {
+        listaPrecios = [];
+        const tiendasSet = new Set();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            listaPrecios.push(data);
+            if(data.tienda) tiendasSet.add(data.tienda);
+        });
+
+        // Actualizar tabla y datalist de tiendas
+        renderizarTabla();
+        actualizarDatalistTiendas(tiendasSet);
+        
+        statusEl.textContent = "🟢 Sistema Online y Sincronizado";
+        statusEl.className = "online";
+    }, (error) => {
+        statusEl.textContent = "🔴 Error: " + error.message;
+    });
+
+    // --- FUNCIONES DE LOGICA ---
+
+    // A. CREAR PRODUCTO MAESTRO (Evita duplicados)
+    window.crearProductoMaestro = async function() {
+        const cat = document.getElementById('nuevaCategoria').value.trim().toUpperCase();
+        const nom = document.getElementById('nuevoNombreProducto').value.trim();
+
+        if(!cat || !nom) return alert("Falta categoría o nombre");
+
+        // Validar si ya existe
+        const existe = listaProductosMaestros.find(p => p.nombre.toLowerCase() === nom.toLowerCase());
+        if(existe) return alert("⚠️ Este producto ya existe en la categoría: " + existe.categoria);
+
+        try {
+            await addDoc(collection(db, "productos_maestro"), {
+                categoria: cat,
+                nombre: nom // Guardamos tal cual lo escribió
+            });
+            alert("✅ Producto creado exitosamente. Ahora puedes registrarle precios abajo.");
+            document.getElementById('nuevoNombreProducto').value = '';
+        } catch(e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    // B. GUARDAR PRECIO (Usa el selector, imposible equivocarse)
+    window.guardarPrecio = async function() {
+        const selProd = document.getElementById('selProductoRegistro');
+        const nombreProd = selProd.value; // Valor del select
+        
+        // Obtenemos la categoría oculta en el option seleccionado o buscamos en la lista
+        const productoObj = listaProductosMaestros.find(p => p.nombre === nombreProd);
+
+        const tienda = document.getElementById('regTienda').value.trim().toUpperCase();
         const precio = parseFloat(document.getElementById('regPrecio').value);
 
-        if (!prod || !tienda || isNaN(precio)) {
-            alert("⚠️ Por favor completa todos los campos.");
-            return;
-        }
+        if(!nombreProd || !tienda || isNaN(precio)) return alert("Completa todos los campos del Paso 2");
 
-        statusEl.textContent = "⏳ Guardando...";
-        
         try {
             await addDoc(collection(db, "precios"), {
-                producto: prod,
+                categoria: productoObj.categoria,
+                producto: productoObj.nombre,
                 tienda: tienda,
                 precio: precio,
                 fecha: new Date().toISOString().split('T')[0]
             });
-            
-            // Limpiar campos
-            document.getElementById('regProducto').value = ''; 
+            alert("✅ Precio registrado");
             document.getElementById('regPrecio').value = '';
-            // Nota: No limpiamos tienda por si registras varios productos del mismo proveedor
+        } catch(e) { alert("Error: " + e.message); }
+    }
+
+    // C. ACTUALIZAR DROPDOWNS INTELIGENTES
+    function actualizarSelectoresCategorias() {
+        const categorias = [...new Set(listaProductosMaestros.map(p => p.categoria))].sort();
+        const selects = ['filtroCatRegistro', 'filtroCatCompra', 'listaCategoriasSugeridas'];
+
+        // Llenar selects de categoría
+        const selReg = document.getElementById('filtroCatRegistro');
+        const selComp = document.getElementById('filtroCatCompra');
+        const dlCat = document.getElementById('listaCategoriasSugeridas');
+
+        // Guardar selección actual para no perderla al refrescar
+        const valReg = selReg.value;
+        const valComp = selComp.value;
+
+        selReg.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
+        selComp.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
+        dlCat.innerHTML = '';
+
+        categorias.forEach(c => {
+            selReg.innerHTML += `<option value="${c}">${c}</option>`;
+            selComp.innerHTML += `<option value="${c}">${c}</option>`;
+            dlCat.innerHTML += `<option value="${c}">`;
+        });
+
+        selReg.value = valReg;
+        selComp.value = valComp;
+
+        // Si ya había categoría seleccionada, refrescar la lista de productos
+        if(valReg) window.filtrarProductos('registro');
+        if(valComp) window.filtrarProductos('compra');
+    }
+
+    window.filtrarProductos = function(tipo) {
+        const idCat = tipo === 'registro' ? 'filtroCatRegistro' : 'filtroCatCompra';
+        const idProd = tipo === 'registro' ? 'selProductoRegistro' : 'selProductoCompra';
+        
+        const catSeleccionada = document.getElementById(idCat).value;
+        const selectProd = document.getElementById(idProd);
+        
+        selectProd.innerHTML = '<option value="">-- Selecciona Producto --</option>';
+
+        if(catSeleccionada) {
+            // Filtrar y ordenar alfabéticamente
+            const filtrados = listaProductosMaestros
+                .filter(p => p.categoria === catSeleccionada)
+                .sort((a,b) => a.nombre.localeCompare(b.nombre));
             
-        } catch (e) {
-            alert("Error al guardar: " + e.message);
+            filtrados.forEach(p => {
+                selectProd.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+            });
         }
     }
 
-    // --- Interfaz ---
-    window.cambiarPestana = function(id) {
-        document.querySelectorAll('.section').forEach(d => d.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
+    function actualizarDatalistTiendas(setTiendas) {
+        const dl = document.getElementById('listaTiendas');
+        dl.innerHTML = '';
+        setTiendas.forEach(t => dl.innerHTML += `<option value="${t}">`);
     }
 
-    function actualizarDesplegables() {
-        const productos = Object.keys(baseDatos).sort();
-        const tiendas = new Set();
-        
-        // Datalist Registro
-        const dlProd = document.getElementById('listaProductos');
-        dlProd.innerHTML = '';
-        productos.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p;
-            dlProd.appendChild(opt);
-            // Recolectar tiendas
-            Object.keys(baseDatos[p]).forEach(t => tiendas.add(t));
-        });
-
-        // Select Carrito
-        const selCar = document.getElementById('selCarrito');
-        const valorActual = selCar.value; // Intentar mantener selección
-        selCar.innerHTML = '<option value="">Selecciona...</option>';
-        productos.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p;
-            opt.text = p.charAt(0).toUpperCase() + p.slice(1);
-            selCar.appendChild(opt);
-        });
-        selCar.value = valorActual;
-
-        // Datalist Tiendas
-        const dlTienda = document.getElementById('listaTiendas');
-        dlTienda.innerHTML = '';
-        tiendas.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t;
-            dlTienda.appendChild(opt);
-        });
-    }
-
-    function renderizarTabla() {
-        const tbody = document.querySelector('#tablaDatos tbody');
-        tbody.innerHTML = '';
-        
-        // Recorremos el objeto baseDatos
-        for (const [prod, tiendas] of Object.entries(baseDatos)) {
-            for (const [tienda, datos] of Object.entries(tiendas)) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="text-transform: capitalize;">${prod}</td>
-                    <td>${tienda}</td>
-                    <td>$${datos.precio.toFixed(2)}</td>
-                    <td style="color:#718096; font-size:0.8rem">${datos.fecha}</td>
-                `;
-                tbody.appendChild(tr);
-            }
-        }
-    }
-
-    // --- Carrito y Optimización (Igual que antes) ---
+    // D. CARRITO Y CALCULADORA (Lógica ajustada a nueva estructura)
     window.agregarAlCarrito = function() {
-        const item = document.getElementById('selCarrito').value;
-        if(item && !carrito.includes(item)) {
-            carrito.push(item);
-            renderizarCarritoVisual();
-        }
+        const prod = document.getElementById('selProductoCompra').value;
+        const cat = document.getElementById('filtroCatCompra').value;
+        
+        if(!prod) return alert("Selecciona un producto");
+        if(carrito.find(item => item.producto === prod)) return alert("Ya está en la lista");
+
+        carrito.push({ producto: prod, categoria: cat });
+        renderizarCarrito();
     }
 
-    function renderizarCarritoVisual() {
+    function renderizarCarrito() {
         const div = document.getElementById('listaVisual');
         div.innerHTML = '';
-        carrito.forEach((item, index) => {
+        carrito.forEach((item, idx) => {
             div.innerHTML += `
                 <div class="list-item">
-                    <span style="text-transform: capitalize;">🛒 ${item}</span>
-                    <button class="btn btn-danger" onclick="eliminarItem(${index})">✕</button>
-                </div>
-            `;
+                    <span><b>${item.categoria}</b>: ${item.producto}</span>
+                    <button class="btn btn-danger" onclick="eliminarDelCarrito(${idx})">✕</button>
+                </div>`;
         });
     }
 
-    window.eliminarItem = function(index) {
-        carrito.splice(index, 1);
-        renderizarCarritoVisual();
+    window.eliminarDelCarrito = function(idx) {
+        carrito.splice(idx, 1);
+        renderizarCarrito();
     }
 
     window.calcularOptimo = function() {
         if(carrito.length === 0) return;
-        
+        const resDiv = document.getElementById('resultadoFinal');
         let html = '';
         let total = 0;
 
         carrito.forEach(item => {
-            if(baseDatos[item]) {
-                const tiendas = baseDatos[item];
-                // Encontrar mínimo
-                const mejorTienda = Object.keys(tiendas).reduce((a, b) => 
-                    tiendas[a].precio < tiendas[b].precio ? a : b
-                );
-                const info = tiendas[mejorTienda];
+            // Buscar precios para este producto específico
+            const preciosDelProd = listaPrecios.filter(p => p.producto === item.producto);
+            
+            if(preciosDelProd.length > 0) {
+                // Encontrar el más barato
+                const mejorOpcion = preciosDelProd.reduce((min, current) => current.precio < min.precio ? current : min);
                 
                 html += `
                     <div class="result-card">
-                        <div style="font-weight:bold; text-transform:capitalize;">${item}</div>
-                        <div>Comprar en: <b>${mejorTienda}</b></div>
-                        <div style="font-size:1.1rem; color:#2c5282;">$${info.precio.toFixed(2)}</div>
-                    </div>
-                `;
-                total += info.precio;
+                        <div style="font-size:0.85rem; color:#718096">${item.categoria}</div>
+                        <div style="font-weight:bold; font-size:1.1rem">${item.producto}</div>
+                        <div>Comprar en: <b>${mejorOpcion.tienda}</b></div>
+                        <div style="font-size:1.2rem; color:#2c5282; font-weight:bold">$${mejorOpcion.precio.toFixed(2)}</div>
+                        <small>Actualizado: ${mejorOpcion.fecha}</small>
+                    </div>`;
+                total += mejorOpcion.precio;
             } else {
-                html += `<div class="result-card" style="border-color:red;">❌ ${item}: Sin datos</div>`;
+                html += `<div class="result-card" style="border-left-color:red">❌ ${item.producto}: Sin precios registrados aún.</div>`;
             }
         });
+        
+        html += `<div style="text-align:center; margin-top:20px; font-size:1.5rem; font-weight:bold; color:#2f855a">Total Estimado: $${total.toFixed(2)}</div>`;
+        resDiv.innerHTML = html;
+    }
 
-        html += `<div style="margin-top:20px; text-align:center; font-size:1.2rem; font-weight:bold;">Total Estimado: $${total.toFixed(2)}</div>`;
-        document.getElementById('resultadoFinal').innerHTML = html;
+    // E. TABLA Y CSV
+    function renderizarTabla() {
+        const tbody = document.querySelector('#tablaDatos tbody');
+        tbody.innerHTML = '';
+        // Ordenar listaPrecios por categoría y luego nombre
+        const listaOrdenada = [...listaPrecios].sort((a,b) => a.categoria.localeCompare(b.categoria) || a.producto.localeCompare(b.producto));
+
+        listaOrdenada.forEach(dato => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><span style="background:#edf2f7; padding:2px 6px; border-radius:4px; font-size:0.8rem">${dato.categoria}</span></td>
+                    <td>${dato.producto}</td>
+                    <td>${dato.tienda}</td>
+                    <td>$${dato.precio.toFixed(2)}</td>
+                    <td style="font-size:0.8rem; color:#718096">${dato.fecha}</td>
+                </tr>`;
+        });
     }
 
     window.exportarCSV = function() {
-        let csv = "Producto,Tienda,Precio,Fecha\n";
-        for (const [prod, tiendas] of Object.entries(baseDatos)) {
-            for (const [tienda, datos] of Object.entries(tiendas)) {
-                csv += `${prod},${tienda},${datos.precio},${datos.fecha}\n`;
-            }
-        }
+        let csv = "Categoria,Producto,Tienda,Precio,Fecha\n";
+        listaPrecios.forEach(d => {
+            csv += `${d.categoria},${d.producto},${d.tienda},${d.precio},${d.fecha}\n`;
+        });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `precios_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `Inventario_Precios_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
+    }
+
+    // Navegación Pestañas
+    window.cambiarPestana = function(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
     }
 </script>
 
