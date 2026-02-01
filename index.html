@@ -160,7 +160,7 @@
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --------------------------------------------------------
-    // ¡¡¡ TUS CREDENCIALES AQUÍ !!!
+    // ¡¡¡ TUS CREDENCIALES AQUÍ (PEGA TUS CLAVES) !!!
     // --------------------------------------------------------
     const firebaseConfig = {
         apiKey: "AIzaSyDVUcidSc7_csmF7RtSLRv15Oam7Ika8Qs",
@@ -169,6 +169,7 @@
   storageBucket: "gestor-de-precios-abarrotesddj.firebasestorage.app",
   messagingSenderId: "1012662122228",
   appId: "1:1012662122228:web:c745c2ebe88bd2fa8ed0a1"
+
     };
 
     const app = initializeApp(firebaseConfig);
@@ -176,10 +177,10 @@
     const statusEl = document.getElementById('status');
 
     let listaProductosMaestros = [];
-    let listaPreciosRaw = []; // Aquí guardamos TODO el historial sin filtrar
+    let listaPreciosRaw = [];
     let carrito = [];
 
-    // 1. CARGA DE PRODUCTOS MAESTROS
+    // CARGA DE DATOS (Igual que antes)
     const qProd = query(collection(db, "productos_maestro"), orderBy("nombre"));
     onSnapshot(qProd, (snapshot) => {
         listaProductosMaestros = [];
@@ -187,49 +188,103 @@
         actualizarSelectoresCategorias();
     });
 
-    // 2. CARGA DE PRECIOS (Todo el historial)
     const qPrecios = query(collection(db, "precios"), orderBy("fecha", "desc"));
     onSnapshot(qPrecios, (snapshot) => {
         listaPreciosRaw = [];
         const tiendasSet = new Set();
-
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Normalización para evitar undefined
+            // Normalización
             data.categoria = data.categoria || "Sin Categoría";
             data.producto = data.producto || "Desconocido";
             data.tienda = data.tienda || "Desconocido";
-            
             listaPreciosRaw.push(data);
             tiendasSet.add(data.tienda);
         });
-
         renderizarTabla();
         actualizarDatalistTiendas(tiendasSet);
-        
         statusEl.textContent = "🟢 Sincronizado";
         statusEl.className = "online";
     });
 
-    // --- LÓGICA DE NEGOCIO ---
+    // =========================================================
+    // CORRECCIÓN PRINCIPAL AQUÍ (Función calcularOptimo)
+    // =========================================================
+    window.calcularOptimo = function() {
+        if(carrito.length === 0) return;
+        const resDiv = document.getElementById('resultadoFinal');
+        let html = '';
+        let total = 0;
 
-    // TABLA VISUAL: Filtramos para mostrar solo el ÚLTIMO precio de cada tienda
+        // Fecha límite (15 días)
+        const fechaLimite = new Date();
+        fechaLimite.setDate(fechaLimite.getDate() - 15);
+        const fechaLimiteStr = fechaLimite.toISOString().split('T')[0];
+
+        carrito.forEach(item => {
+            // PASO 1: Filtrar historial de este producto (dentro de los 15 días)
+            const historialReciente = listaPreciosRaw.filter(p => 
+                p.producto === item.producto && 
+                p.fecha >= fechaLimiteStr
+            );
+            
+            // PASO 2: LIMPIEZA DE "ERRORES FANTASMA"
+            // Agrupamos por tienda y nos quedamos SOLO con el registro más reciente de cada una.
+            // Esto evita que un precio viejo y barato (error) le gane a un precio nuevo y caro (corrección).
+            const preciosPorTienda = {};
+
+            historialReciente.forEach(p => {
+                // Si la tienda no está en la lista, O si este registro es más nuevo del que ya teniamos:
+                if (!preciosPorTienda[p.tienda] || p.fecha > preciosPorTienda[p.tienda].fecha) {
+                    preciosPorTienda[p.tienda] = p; // Actualizamos con el dato más reciente
+                }
+            });
+
+            // Convertimos el objeto limpio a una lista para comparar
+            const opcionesValidas = Object.values(preciosPorTienda);
+
+            // PASO 3: Ahora sí, buscamos el más barato de los datos validados
+            if(opcionesValidas.length > 0) {
+                const mejorOpcion = opcionesValidas.reduce((min, current) => current.precio < min.precio ? current : min);
+                
+                html += `
+                    <div class="result-card">
+                        <div style="font-size:0.85rem; color:#718096">${item.categoria}</div>
+                        <div style="font-weight:bold; font-size:1.1rem">${item.producto}</div>
+                        <div>Comprar en: <b>${mejorOpcion.tienda}</b></div>
+                        <div style="font-size:1.2rem; color:#2f855a; font-weight:bold">$${mejorOpcion.precio.toFixed(2)}</div>
+                        <small style="color:#4a5568">Fecha: ${mejorOpcion.fecha}</small>
+                    </div>`;
+                total += mejorOpcion.precio;
+            } else {
+                html += `
+                    <div class="result-card" style="border-left-color:red; background:#fff5f5">
+                        <div style="font-weight:bold">${item.producto}</div>
+                        <div style="color:#c53030">❌ Sin datos recientes (últimos 15 días).</div>
+                    </div>`;
+            }
+        });
+        
+        if(total > 0) {
+            html += `<div style="text-align:center; margin-top:20px; font-size:1.5rem; font-weight:bold; color:#2f855a">Total Estimado: $${total.toFixed(2)}</div>`;
+        }
+        resDiv.innerHTML = html;
+    }
+
+    // --- RESTO DE FUNCIONES (Sin cambios importantes) ---
+
     function renderizarTabla() {
         const tbody = document.querySelector('#tablaDatos tbody');
         tbody.innerHTML = '';
-        
-        // Objeto auxiliar para guardar solo el último registro: clave = "Producto|Tienda"
         const ultimosRegistros = {};
-
-        // Recorremos el historial (como viene ordenado por fecha desc, el primero que encontramos es el mas nuevo)
+        
+        // Lógica de visualización (Misma que usamos para el optimizador ahora)
         listaPreciosRaw.forEach(d => {
             const key = `${d.producto}|${d.tienda}`;
-            if (!ultimosRegistros[key]) {
-                ultimosRegistros[key] = d; // Guardamos el primero que vemos (el más reciente)
-            }
+            // Como la lista viene ordenada por fecha descendente, el primero es el último
+            if (!ultimosRegistros[key]) ultimosRegistros[key] = d; 
         });
 
-        // Convertimos de vuelta a lista y ordenamos para mostrar
         const listaVisual = Object.values(ultimosRegistros).sort((a,b) => 
             a.categoria.localeCompare(b.categoria) || a.producto.localeCompare(b.producto)
         );
@@ -246,81 +301,12 @@
         });
     }
 
-    // OPTIMIZADOR: Filtramos precios viejos (> 15 días)
-    window.calcularOptimo = function() {
-        if(carrito.length === 0) return;
-        const resDiv = document.getElementById('resultadoFinal');
-        let html = '';
-        let total = 0;
-
-        // Calcular fecha límite (Hoy - 15 días)
-        const fechaLimite = new Date();
-        fechaLimite.setDate(fechaLimite.getDate() - 15);
-        const fechaLimiteStr = fechaLimite.toISOString().split('T')[0];
-
-        carrito.forEach(item => {
-            // Paso 1: Filtrar precios de este producto
-            // Paso 2: Filtrar solo los que sean >= fechaLimite (últimos 15 días)
-            const preciosValidos = listaPreciosRaw.filter(p => 
-                p.producto === item.producto && 
-                p.fecha >= fechaLimiteStr
-            );
-            
-            if(preciosValidos.length > 0) {
-                // Paso 3: Buscar el más barato de los válidos
-                const mejorOpcion = preciosValidos.reduce((min, current) => current.precio < min.precio ? current : min);
-                
-                html += `
-                    <div class="result-card">
-                        <div style="font-size:0.85rem; color:#718096">${item.categoria}</div>
-                        <div style="font-weight:bold; font-size:1.1rem">${item.producto}</div>
-                        <div>Comprar en: <b>${mejorOpcion.tienda}</b></div>
-                        <div style="font-size:1.2rem; color:#2f855a; font-weight:bold">$${mejorOpcion.precio.toFixed(2)}</div>
-                        <small style="color:#4a5568">Fecha: ${mejorOpcion.fecha}</small>
-                    </div>`;
-                total += mejorOpcion.precio;
-            } else {
-                // Si no hay precios recientes
-                html += `
-                    <div class="result-card" style="border-left-color:red; background:#fff5f5">
-                        <div style="font-weight:bold">${item.producto}</div>
-                        <div style="color:#c53030">❌ Sin datos recientes (últimos 15 días).</div>
-                        <small>Actualiza el precio en la pestaña "Registrar"</small>
-                    </div>`;
-            }
-        });
-        
-        if(total > 0) {
-            html += `<div style="text-align:center; margin-top:20px; font-size:1.5rem; font-weight:bold; color:#2f855a">Total Estimado: $${total.toFixed(2)}</div>`;
-        }
-        resDiv.innerHTML = html;
-    }
-
-    // DESCARGA: Exporta TODO el historial (sin filtrar fechas)
-    window.exportarCSV = function() {
-        let csv = "Categoria,Producto,Tienda,Precio,Fecha\n";
-        
-        listaPreciosRaw.forEach(d => {
-            csv += `${d.categoria},${d.producto},${d.tienda},${d.precio},${d.fecha}\n`;
-        });
-        
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Historial_Completo_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-    }
-
-    // --- FUNCIONES DE REGISTRO (Iguales que v3) ---
     window.crearProductoMaestro = async function() {
         const cat = document.getElementById('nuevaCategoria').value.trim().toUpperCase();
         const nom = document.getElementById('nuevoNombreProducto').value.trim();
-
         if(!cat || !nom) return alert("Falta categoría o nombre");
         const existe = listaProductosMaestros.find(p => p.nombre.toLowerCase() === nom.toLowerCase());
         if(existe) return alert("⚠️ Ya existe: " + existe.categoria);
-
         try {
             await addDoc(collection(db, "productos_maestro"), { categoria: cat, nombre: nom });
             alert("✅ Producto creado");
@@ -350,13 +336,24 @@
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    // --- UI HELPERS ---
+    window.exportarCSV = function() {
+        let csv = "Categoria,Producto,Tienda,Precio,Fecha\n";
+        listaPreciosRaw.forEach(d => {
+            csv += `${d.categoria},${d.producto},${d.tienda},${d.precio},${d.fecha}\n`;
+        });
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Historial_Completo_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    }
+
     window.filtrarProductos = function(tipo) {
         const idCat = tipo === 'registro' ? 'filtroCatRegistro' : 'filtroCatCompra';
         const idProd = tipo === 'registro' ? 'selProductoRegistro' : 'selProductoCompra';
         const catSeleccionada = document.getElementById(idCat).value;
         const selectProd = document.getElementById(idProd);
-        
         selectProd.innerHTML = '<option value="">-- Selecciona Producto --</option>';
         if(catSeleccionada) {
             const filtrados = listaProductosMaestros
@@ -371,21 +368,16 @@
         const dlCat = document.getElementById('listaCategoriasSugeridas');
         const selReg = document.getElementById('filtroCatRegistro');
         const selComp = document.getElementById('filtroCatCompra');
-        
-        // Preservar selección
         const valReg = selReg.value; 
         const valComp = selComp.value;
-
         dlCat.innerHTML = '';
         selReg.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
         selComp.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
-
         categorias.forEach(c => {
             dlCat.innerHTML += `<option value="${c}">`;
             selReg.innerHTML += `<option value="${c}">${c}</option>`;
             selComp.innerHTML += `<option value="${c}">${c}</option>`;
         });
-        
         selReg.value = valReg;
         selComp.value = valComp;
     }
@@ -429,7 +421,8 @@
         event.target.classList.add('active');
     }
 </script>
-
+    
 </body>
 </html>
+
 
